@@ -7,11 +7,18 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { IngredientInput } from '@/components/IngredientInput'
+
+interface Ingredient {
+  name: string
+  amount: string
+  unit: string
+}
 
 interface Recipe {
   _id: string
   name: string
-  ingredients: string[]
+  ingredients: Ingredient[]
   instructions: string
   prepTime: number
   category: string
@@ -32,11 +39,14 @@ export function AddRecipeForm({ onSuccess, onCancel, editingRecipe }: AddRecipeF
   
   const [formData, setFormData] = useState({
     name: '',
-    ingredients: '',
     instructions: '',
     prepTime: '',
     category: 'Main Course'
   })
+  
+  const [ingredients, setIngredients] = useState<Ingredient[]>([
+    { name: '', amount: '', unit: 'cups' }
+  ])
   
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -45,11 +55,13 @@ export function AddRecipeForm({ onSuccess, onCancel, editingRecipe }: AddRecipeF
     if (editingRecipe) {
       setFormData({
         name: editingRecipe.name,
-        ingredients: editingRecipe.ingredients.join('\n'),
         instructions: editingRecipe.instructions,
         prepTime: editingRecipe.prepTime.toString(),
         category: editingRecipe.category
       })
+      setIngredients(editingRecipe.ingredients.length > 0 ? editingRecipe.ingredients : [
+        { name: '', amount: '', unit: 'cups' }
+      ])
     }
   }, [editingRecipe])
 
@@ -57,25 +69,31 @@ export function AddRecipeForm({ onSuccess, onCancel, editingRecipe }: AddRecipeF
     e.preventDefault()
     if (!user) return
     
+    // Filter out empty ingredients
+    const validIngredients = ingredients.filter(ing => ing.name.trim() && ing.amount.trim())
+    
+    if (validIngredients.length === 0) {
+      alert('Please add at least one ingredient')
+      return
+    }
+    
     setIsSubmitting(true)
     
     try {
       const recipeData = {
         name: formData.name,
-        ingredients: formData.ingredients.split('\n').filter(item => item.trim()),
+        ingredients: validIngredients,
         instructions: formData.instructions,
         prepTime: parseInt(formData.prepTime) || 0,
         category: formData.category,
       }
 
       if (editingRecipe) {
-        // Update existing recipe
         await updateRecipe({
           id: editingRecipe._id as any,
           ...recipeData
         })
       } else {
-        // Create new recipe
         await createRecipe({
           ...recipeData,
           userId: user.userId
@@ -91,39 +109,41 @@ export function AddRecipeForm({ onSuccess, onCancel, editingRecipe }: AddRecipeF
   }
 
   return (
-    <Card className="max-w-2xl mx-auto">
+    <Card className="max-w-4xl mx-auto">
       <CardHeader>
         <CardTitle>
           {editingRecipe ? 'Edit Recipe' : 'Add New Recipe'}
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="name">Recipe Name</Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              required
-              placeholder="e.g., Grandma's Chocolate Chip Cookies"
-            />
-          </div>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="name">Recipe Name</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                required
+                placeholder="e.g., Grandma's Chocolate Chip Cookies"
+              />
+            </div>
 
-          <div>
-            <Label htmlFor="category">Category</Label>
-            <select
-              id="category"
-              value={formData.category}
-              onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            >
-              <option value="Appetizer">Appetizer</option>
-              <option value="Main Course">Main Course</option>
-              <option value="Dessert">Dessert</option>
-              <option value="Beverage">Beverage</option>
-              <option value="Snack">Snack</option>
-            </select>
+            <div>
+              <Label htmlFor="category">Category</Label>
+              <select
+                id="category"
+                value={formData.category}
+                onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="Appetizer">Appetizer</option>
+                <option value="Main Course">Main Course</option>
+                <option value="Dessert">Dessert</option>
+                <option value="Beverage">Beverage</option>
+                <option value="Snack">Snack</option>
+              </select>
+            </div>
           </div>
 
           <div>
@@ -134,20 +154,14 @@ export function AddRecipeForm({ onSuccess, onCancel, editingRecipe }: AddRecipeF
               value={formData.prepTime}
               onChange={(e) => setFormData(prev => ({ ...prev, prepTime: e.target.value }))}
               placeholder="30"
+              className="max-w-xs"
             />
           </div>
 
-          <div>
-            <Label htmlFor="ingredients">Ingredients (one per line)</Label>
-            <Textarea
-              id="ingredients"
-              value={formData.ingredients}
-              onChange={(e) => setFormData(prev => ({ ...prev, ingredients: e.target.value }))}
-              placeholder="2 cups flour&#10;1 cup sugar&#10;2 eggs"
-              rows={6}
-              required
-            />
-          </div>
+          <IngredientInput
+            ingredients={ingredients}
+            onChange={setIngredients}
+          />
 
           <div>
             <Label htmlFor="instructions">Instructions</Label>

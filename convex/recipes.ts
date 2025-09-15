@@ -17,7 +17,11 @@ export const getRecipes = query({
 export const createRecipe = mutation({
   args: {
     name: v.string(),
-    ingredients: v.array(v.string()),
+    ingredients: v.array(v.object({
+      name: v.string(),
+      amount: v.string(),
+      unit: v.string(),
+    })),
     instructions: v.string(),
     prepTime: v.number(),
     category: v.string(),
@@ -36,7 +40,11 @@ export const updateRecipe = mutation({
   args: {
     id: v.id("recipes"),
     name: v.string(),
-    ingredients: v.array(v.string()),
+    ingredients: v.array(v.object({
+      name: v.string(),
+      amount: v.string(),
+      unit: v.string(),
+    })),
     instructions: v.string(),
     prepTime: v.number(),
     category: v.string(),

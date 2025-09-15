@@ -3,10 +3,16 @@ import { api } from '../../convex/_generated/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
+interface Ingredient {
+  name: string
+  amount: string
+  unit: string
+}
+
 interface Recipe {
   _id: string
   name: string
-  ingredients: string[]
+  ingredients: Ingredient[]
   instructions: string
   prepTime: number
   category: string
@@ -27,7 +33,7 @@ export function RecipeDetail({ recipe, onBack, onEdit }: RecipeDetailProps) {
     if (confirm('Are you sure you want to delete this recipe?')) {
       try {
         await deleteRecipe({ id: recipe._id as any })
-        onBack() // Go back to list after delete
+        onBack()
       } catch (error) {
         console.error('Error deleting recipe:', error)
       }
@@ -62,11 +68,13 @@ export function RecipeDetail({ recipe, onBack, onEdit }: RecipeDetailProps) {
         <CardContent className="space-y-6">
           <div>
             <h3 className="text-xl font-semibold mb-3">Ingredients</h3>
-            <ul className="space-y-1">
+            <ul className="space-y-2">
               {recipe.ingredients.map((ingredient, index) => (
                 <li key={index} className="flex items-start">
                   <span className="text-gray-400 mr-2">•</span>
-                  <span>{ingredient}</span>
+                  <span>
+                    <strong>{ingredient.amount} {ingredient.unit}</strong> {ingredient.name}
+                  </span>
                 </li>
               ))}
             </ul>
