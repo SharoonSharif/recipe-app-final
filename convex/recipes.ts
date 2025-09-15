@@ -31,6 +31,22 @@ export const createRecipe = mutation({
   },
 });
 
+// Update an existing recipe
+export const updateRecipe = mutation({
+  args: {
+    id: v.id("recipes"),
+    name: v.string(),
+    ingredients: v.array(v.string()),
+    instructions: v.string(),
+    prepTime: v.number(),
+    category: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { id, ...updateData } = args;
+    return await ctx.db.patch(id, updateData);
+  },
+});
+
 // Delete a recipe
 export const deleteRecipe = mutation({
   args: { id: v.id("recipes") },

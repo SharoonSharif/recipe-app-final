@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useMutation } from 'convex/react'
 import { useUser } from '@descope/react-sdk'
 import { api } from '../../convex/_generated/api'
@@ -8,14 +8,27 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
+interface Recipe {
+  _id: string
+  name: string
+  ingredients: string[]
+  instructions: string
+  prepTime: number
+  category: string
+  userId: string
+  createdAt: number
+}
+
 interface AddRecipeFormProps {
   onSuccess: () => void
   onCancel: () => void
+  editingRecipe?: Recipe | null
 }
 
-export function AddRecipeForm({ onSuccess, onCancel }: AddRecipeFormProps) {
+export function AddRecipeForm({ onSuccess, onCancel, editingRecipe }: AddRecipeFormProps) {
   const { user } = useUser()
   const createRecipe = useMutation(api.recipes.createRecipe)
+  const updateRecipe = useMutation(api.recipes.updateRecipe)
   
   const [formData, setFormData] = useState({
     name: '',
@@ -27,6 +40,19 @@ export function AddRecipeForm({ onSuccess, onCancel }: AddRecipeFormProps) {
   
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  // Populate form when editing
+  useEffect(() => {
+    if (editingRecipe) {
+      setFormData({
+        name: editingRecipe.name,
+        ingredients: editingRecipe.ingredients.join('\n'),
+        instructions: editingRecipe.instructions,
+        prepTime: editingRecipe.prepTime.toString(),
+        category: editingRecipe.category
+      })
+    }
+  }, [editingRecipe])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user) return
@@ -34,18 +60,31 @@ export function AddRecipeForm({ onSuccess, onCancel }: AddRecipeFormProps) {
     setIsSubmitting(true)
     
     try {
-      await createRecipe({
+      const recipeData = {
         name: formData.name,
         ingredients: formData.ingredients.split('\n').filter(item => item.trim()),
         instructions: formData.instructions,
         prepTime: parseInt(formData.prepTime) || 0,
         category: formData.category,
-        userId: user.userId
-      })
+      }
+
+      if (editingRecipe) {
+        // Update existing recipe
+        await updateRecipe({
+          id: editingRecipe._id as any,
+          ...recipeData
+        })
+      } else {
+        // Create new recipe
+        await createRecipe({
+          ...recipeData,
+          userId: user.userId
+        })
+      }
       
       onSuccess()
     } catch (error) {
-      console.error('Error creating recipe:', error)
+      console.error('Error saving recipe:', error)
     } finally {
       setIsSubmitting(false)
     }
@@ -54,7 +93,9 @@ export function AddRecipeForm({ onSuccess, onCancel }: AddRecipeFormProps) {
   return (
     <Card className="max-w-2xl mx-auto">
       <CardHeader>
-        <CardTitle>Add New Recipe</CardTitle>
+        <CardTitle>
+          {editingRecipe ? 'Edit Recipe' : 'Add New Recipe'}
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -122,7 +163,10 @@ export function AddRecipeForm({ onSuccess, onCancel }: AddRecipeFormProps) {
 
           <div className="flex gap-4 pt-4">
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Adding Recipe...' : 'Add Recipe'}
+              {isSubmitting 
+                ? (editingRecipe ? 'Updating Recipe...' : 'Adding Recipe...') 
+                : (editingRecipe ? 'Update Recipe' : 'Add Recipe')
+              }
             </Button>
             <Button type="button" variant="outline" onClick={onCancel}>
               Cancel

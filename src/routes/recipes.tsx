@@ -54,6 +54,7 @@ function RecipesList() {
   if (showAddForm || editingRecipe) {
     return (
       <AddRecipeForm
+        editingRecipe={editingRecipe}
         onSuccess={() => {
           setShowAddForm(false)
           setEditingRecipe(null)
