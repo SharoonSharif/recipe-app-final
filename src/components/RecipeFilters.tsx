@@ -29,26 +29,27 @@ export function RecipeFilters({
   const hasActiveFilters = searchTerm || selectedCategory || ingredientFilter
 
   return (
-    <Card className="mb-6">
-      <CardContent className="pt-6">
-        <div className="grid gap-4 md:grid-cols-4">
+    <Card className="mb-4 md:mb-6">
+      <CardContent className="pt-4 md:pt-6">
+        <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <Label htmlFor="search">Search recipes</Label>
+            <Label htmlFor="search" className="text-sm">Search recipes</Label>
             <Input
               id="search"
               placeholder="Recipe name..."
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
+              className="mt-1"
             />
           </div>
           
           <div>
-            <Label htmlFor="category">Category</Label>
+            <Label htmlFor="category" className="text-sm">Category</Label>
             <select
               id="category"
               value={selectedCategory}
               onChange={(e) => onCategoryChange(e.target.value)}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-1"
             >
               <option value="">All categories</option>
               <option value="Appetizer">Appetizer</option>
@@ -60,12 +61,13 @@ export function RecipeFilters({
           </div>
           
           <div>
-            <Label htmlFor="ingredient">Has ingredient</Label>
+            <Label htmlFor="ingredient" className="text-sm">Has ingredient</Label>
             <Input
               id="ingredient"
               placeholder="e.g., chicken, flour..."
               value={ingredientFilter}
               onChange={(e) => onIngredientChange(e.target.value)}
+              className="mt-1"
             />
           </div>
           
@@ -73,8 +75,9 @@ export function RecipeFilters({
             <Button 
               variant="outline" 
               onClick={onClearFilters}
-              className="w-full"
+              className="w-full h-10"
               disabled={!hasActiveFilters}
+              size="sm"
             >
               Clear filters
             </Button>
@@ -82,7 +85,7 @@ export function RecipeFilters({
         </div>
         
         {hasActiveFilters && (
-          <div className="mt-4 text-sm text-gray-600">
+          <div className="mt-3 md:mt-4 text-sm text-gray-600">
             Showing {filteredCount} of {totalRecipes} recipes
           </div>
         )}
