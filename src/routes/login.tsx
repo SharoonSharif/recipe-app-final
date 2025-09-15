@@ -19,10 +19,9 @@ function LoginPage() {
         Login to Recipe Collection
       </h1>
       <Descope
-        projectId={import.meta.env.VITE_DESCOPE_PROJECT_ID!}
         flowId="sign-up-or-in"
         onSuccess={() => navigate({ to: '/recipes' })}
-        onError={(error) => console.error('Login error:', error)}
+        onError={(error: any) => console.error('Login error:', error)}
       />
     </div>
   )
