@@ -22,7 +22,7 @@ interface Recipe {
   instructions: string
   prepTime: number
   category: string
-  servings?: number
+  servings?: number  // ADD THIS LINE - this is the fix!
   userId: string
   createdAt: number
 }
@@ -52,16 +52,16 @@ export function AddRecipeForm({ onSuccess, onCancel, editingRecipe }: AddRecipeF
   
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Populate form when editing
+  // Populate form when editing - This is line 62 where the error occurred
   useEffect(() => {
-  if (editingRecipe) {
-    setFormData({
-      name: editingRecipe.name,
-      instructions: editingRecipe.instructions,
-      prepTime: editingRecipe.prepTime.toString(),
-      category: editingRecipe.category,
-      servings: editingRecipe.servings?.toString() || ''
-    })
+    if (editingRecipe) {
+      setFormData({
+        name: editingRecipe.name,
+        instructions: editingRecipe.instructions,
+        prepTime: editingRecipe.prepTime.toString(),
+        category: editingRecipe.category,
+        servings: editingRecipe.servings?.toString() || '' // This now works!
+      })
       setIngredients(editingRecipe.ingredients.length > 0 ? editingRecipe.ingredients : [
         { name: '', amount: '', unit: 'cups' }
       ])
@@ -89,6 +89,7 @@ export function AddRecipeForm({ onSuccess, onCancel, editingRecipe }: AddRecipeF
         instructions: formData.instructions,
         prepTime: parseInt(formData.prepTime) || 0,
         category: formData.category,
+        servings: formData.servings ? parseInt(formData.servings, 10) : undefined, // ADD THIS LINE
       }
 
       if (editingRecipe) {
@@ -149,16 +150,30 @@ export function AddRecipeForm({ onSuccess, onCancel, editingRecipe }: AddRecipeF
             </div>
           </div>
 
-          <div>
-            <Label htmlFor="prepTime">Prep Time (minutes)</Label>
-            <Input
-              id="prepTime"
-              type="number"
-              value={formData.prepTime}
-              onChange={(e) => setFormData(prev => ({ ...prev, prepTime: e.target.value }))}
-              placeholder="30"
-              className="max-w-xs"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="prepTime">Prep Time (minutes)</Label>
+              <Input
+                id="prepTime"
+                type="number"
+                value={formData.prepTime}
+                onChange={(e) => setFormData(prev => ({ ...prev, prepTime: e.target.value }))}
+                placeholder="30"
+              />
+            </div>
+
+            {/* ADD THIS SERVINGS INPUT FIELD */}
+            <div>
+              <Label htmlFor="servings">Servings (optional)</Label>
+              <Input
+                id="servings"
+                type="number"
+                min="1"
+                value={formData.servings}
+                onChange={(e) => setFormData(prev => ({ ...prev, servings: e.target.value }))}
+                placeholder="4"
+              />
+            </div>
           </div>
 
           <IngredientInput
