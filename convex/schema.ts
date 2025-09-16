@@ -12,6 +12,7 @@ export default defineSchema({
     instructions: v.string(),
     prepTime: v.number(), // in minutes
     category: v.string(),
+    servings: v.optional(v.number()), // number of servings this recipe makes
     userId: v.string(),
     createdAt: v.number(), // timestamp
   })

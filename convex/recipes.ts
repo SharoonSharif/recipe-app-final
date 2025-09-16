@@ -25,6 +25,7 @@ export const createRecipe = mutation({
     instructions: v.string(),
     prepTime: v.number(),
     category: v.string(),
+    servings: v.optional(v.number()),
     userId: v.string(),
   },
   handler: async (ctx, args) => {
@@ -48,6 +49,7 @@ export const updateRecipe = mutation({
     instructions: v.string(),
     prepTime: v.number(),
     category: v.string(),
+    servings: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const { id, ...updateData } = args;

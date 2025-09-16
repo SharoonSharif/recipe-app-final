@@ -19,6 +19,7 @@ interface Recipe {
   instructions: string
   prepTime: number
   category: string
+  servings?: number
   userId: string
   createdAt: number
 }
@@ -87,6 +88,8 @@ export function RecipeDetail({ recipe, onBack, onEdit }: RecipeDetailProps) {
     amount: scaleAmount(ingredient.amount, scaleFactor)
   }))
 
+  const scaledServings = recipe.servings ? Math.round(recipe.servings * scaleFactor) : undefined
+
   return (
     <div className="max-w-4xl mx-auto">
       <div className="flex justify-between items-center mb-6">
@@ -106,9 +109,10 @@ export function RecipeDetail({ recipe, onBack, onEdit }: RecipeDetailProps) {
       <Card>
         <CardHeader>
           <CardTitle className="text-3xl">{recipe.name}</CardTitle>
-          <div className="flex gap-4 text-sm text-gray-600">
+          <div className="flex gap-4 text-sm text-gray-600 flex-wrap">
             <span>Category: {recipe.category}</span>
             <span>Prep Time: {recipe.prepTime} minutes</span>
+            {recipe.servings && <span>Serves: {recipe.servings}</span>}
             <span>Added: {new Date(recipe.createdAt).toLocaleDateString()}</span>
           </div>
         </CardHeader>
@@ -167,9 +171,12 @@ export function RecipeDetail({ recipe, onBack, onEdit }: RecipeDetailProps) {
               </div>
             </div>
             {scaleFactor !== 1 && (
-              <p className="text-sm text-gray-600 mt-2">
-                Recipe scaled to {scaleFactor}x the original size
-              </p>
+              <div className="text-sm text-gray-600 mt-2 space-y-1">
+                <p>Recipe scaled to {scaleFactor}x the original size</p>
+                {scaledServings && (
+                  <p>Will serve approximately {scaledServings} people</p>
+                )}
+              </div>
             )}
           </div>
 

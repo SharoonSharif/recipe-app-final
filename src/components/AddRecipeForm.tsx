@@ -22,6 +22,7 @@ interface Recipe {
   instructions: string
   prepTime: number
   category: string
+  servings?: number
   userId: string
   createdAt: number
 }
@@ -41,7 +42,8 @@ export function AddRecipeForm({ onSuccess, onCancel, editingRecipe }: AddRecipeF
     name: '',
     instructions: '',
     prepTime: '',
-    category: 'Main Course'
+    category: 'Main Course',
+    servings: ''
   })
   
   const [ingredients, setIngredients] = useState<Ingredient[]>([
@@ -52,13 +54,14 @@ export function AddRecipeForm({ onSuccess, onCancel, editingRecipe }: AddRecipeF
 
   // Populate form when editing
   useEffect(() => {
-    if (editingRecipe) {
-      setFormData({
-        name: editingRecipe.name,
-        instructions: editingRecipe.instructions,
-        prepTime: editingRecipe.prepTime.toString(),
-        category: editingRecipe.category
-      })
+  if (editingRecipe) {
+    setFormData({
+      name: editingRecipe.name,
+      instructions: editingRecipe.instructions,
+      prepTime: editingRecipe.prepTime.toString(),
+      category: editingRecipe.category,
+      servings: editingRecipe.servings?.toString() || ''
+    })
       setIngredients(editingRecipe.ingredients.length > 0 ? editingRecipe.ingredients : [
         { name: '', amount: '', unit: 'cups' }
       ])
