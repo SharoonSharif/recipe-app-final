@@ -59,7 +59,6 @@ function RecipesList() {
   const [ingredientFilter, setIngredientFilter] = useState('')
 
   // Form submission states
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
 
   // Redirect to login if not authenticated
@@ -102,16 +101,9 @@ function RecipesList() {
 
   // Handle form success with loading state
   const handleFormSuccess = () => {
-    setIsSubmitting(false)
     setSubmitError(null)
     setShowAddForm(false)
     setEditingRecipe(null)
-  }
-
-  // Handle form errors
-  const handleFormError = (error: string) => {
-    setIsSubmitting(false)
-    setSubmitError(error)
   }
 
   // Retry function for error state
