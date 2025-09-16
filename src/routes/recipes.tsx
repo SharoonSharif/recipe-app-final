@@ -1,3 +1,5 @@
+// Enhanced recipes.tsx with better loading and error handling
+
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
 import { useSession, useUser } from '@descope/react-sdk'
@@ -8,6 +10,40 @@ import { Button } from '@/components/ui/button'
 import { AddRecipeForm } from '@/components/AddRecipeForm'
 import { RecipeDetail } from '@/components/RecipeDetail'
 import { RecipeFilters } from '@/components/RecipeFilters'
+import { Loader2, AlertCircle, RefreshCw } from 'lucide-react'
+
+// Loading skeleton component
+function RecipeCardSkeleton() {
+  return (
+    <Card className="animate-pulse">
+      <CardHeader>
+        <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2">
+          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+          <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+// Error display component
+function ErrorDisplay({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <div className="text-center py-8">
+      <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+      <h3 className="text-lg font-semibold text-gray-900 mb-2">Something went wrong</h3>
+      <p className="text-gray-600 mb-4">{message}</p>
+      <Button variant="outline" onClick={onRetry}>
+        <RefreshCw className="h-4 w-4 mr-2" />
+        Try Again
+      </Button>
+    </div>
+  )
+}
 
 function RecipesList() {
   const { isAuthenticated, isSessionLoading } = useSession()
@@ -21,6 +57,10 @@ function RecipesList() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('')
   const [ingredientFilter, setIngredientFilter] = useState('')
+
+  // Form submission states
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -39,15 +79,12 @@ function RecipesList() {
     if (!recipes) return []
     
     return recipes.filter(recipe => {
-      // Search by name
       const matchesSearch = searchTerm === '' || 
         recipe.name.toLowerCase().includes(searchTerm.toLowerCase())
       
-      // Filter by category
       const matchesCategory = selectedCategory === '' || 
         recipe.category === selectedCategory
       
-      // Filter by ingredients - works with structured ingredients
       const matchesIngredients = ingredientFilter === '' ||
         recipe.ingredients.some(ingredient => 
           ingredient.name.toLowerCase().includes(ingredientFilter.toLowerCase())
@@ -63,12 +100,42 @@ function RecipesList() {
     setIngredientFilter('')
   }
 
+  // Handle form success with loading state
+  const handleFormSuccess = () => {
+    setIsSubmitting(false)
+    setSubmitError(null)
+    setShowAddForm(false)
+    setEditingRecipe(null)
+  }
+
+  // Handle form errors
+  const handleFormError = (error: string) => {
+    setIsSubmitting(false)
+    setSubmitError(error)
+  }
+
+  // Retry function for error state
+  const retryLoadingRecipes = () => {
+    window.location.reload() // Simple retry - Convex will re-fetch
+  }
+
+  // Loading states
   if (isSessionLoading) {
-    return <div>Loading...</div>
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Loading your session...</span>
+      </div>
+    )
   }
 
   if (!isAuthenticated) {
-    return <div>Redirecting to login...</div>
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Redirecting to login...</span>
+      </div>
+    )
   }
 
   // Show recipe details
@@ -88,22 +155,59 @@ function RecipesList() {
   // Show add/edit form
   if (showAddForm || editingRecipe) {
     return (
-      <AddRecipeForm
-        editingRecipe={editingRecipe}
-        onSuccess={() => {
-          setShowAddForm(false)
-          setEditingRecipe(null)
-        }}
-        onCancel={() => {
-          setShowAddForm(false)
-          setEditingRecipe(null)
-        }}
-      />
+      <div>
+        {submitError && (
+          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+            <div className="flex">
+              <AlertCircle className="h-5 w-5 text-red-400" />
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">Error</h3>
+                <div className="mt-2 text-sm text-red-700">{submitError}</div>
+              </div>
+            </div>
+          </div>
+        )}
+        <AddRecipeForm
+          editingRecipe={editingRecipe}
+          onSuccess={handleFormSuccess}
+          onCancel={() => {
+            setShowAddForm(false)
+            setEditingRecipe(null)
+            setSubmitError(null)
+          }}
+        />
+      </div>
     )
   }
 
-  if (!recipes) {
-    return <div>Loading recipes...</div>
+  // Handle loading state for recipes
+  if (recipes === undefined) {
+    return (
+      <div>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold">Your Recipe Collection</h2>
+          <Button disabled>
+            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            Loading...
+          </Button>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {[...Array(6)].map((_, i) => (
+            <RecipeCardSkeleton key={i} />
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  // Handle error state (if Convex query fails)
+  if (recipes === null) {
+    return (
+      <ErrorDisplay 
+        message="Failed to load your recipes. Please check your connection and try again."
+        onRetry={retryLoadingRecipes}
+      />
+    )
   }
 
   return (
@@ -161,6 +265,11 @@ function RecipesList() {
                 <p className="text-sm text-gray-600 mb-2">
                   Prep time: {recipe.prepTime} minutes
                 </p>
+                {recipe.servings && (
+                  <p className="text-sm text-gray-600 mb-2">
+                    Serves: {recipe.servings}
+                  </p>
+                )}
                 <p className="text-sm text-gray-600">
                   {recipe.ingredients.length} ingredients
                 </p>

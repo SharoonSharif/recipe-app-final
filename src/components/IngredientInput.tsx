@@ -13,6 +13,7 @@ interface Ingredient {
 interface IngredientInputProps {
   ingredients: Ingredient[]
   onChange: (ingredients: Ingredient[]) => void
+  disabled?: boolean // ADD THIS LINE
 }
 
 const commonUnits = [
@@ -20,7 +21,7 @@ const commonUnits = [
   'pieces', 'slices', 'cloves', 'cans', 'bottles', 'packages'
 ]
 
-export function IngredientInput({ ingredients, onChange }: IngredientInputProps) {
+export function IngredientInput({ ingredients, onChange, disabled = false }: IngredientInputProps) {
   const addIngredient = () => {
     onChange([...ingredients, { name: '', amount: '', unit: 'cups' }])
   }
@@ -40,7 +41,7 @@ export function IngredientInput({ ingredients, onChange }: IngredientInputProps)
     <div className="space-y-3 md:space-y-4">
       <div className="flex items-center justify-between">
         <Label className="text-sm md:text-base">Ingredients</Label>
-        <Button type="button" variant="outline" size="sm" onClick={addIngredient}>
+        <Button type="button" variant="outline" size="sm" onClick={addIngredient} disabled={disabled}>
           <Plus className="h-4 w-4 mr-1" />
           <span className="hidden sm:inline">Add Ingredient</span>
           <span className="sm:hidden">Add</span>
@@ -60,6 +61,7 @@ export function IngredientInput({ ingredients, onChange }: IngredientInputProps)
                   value={ingredient.amount}
                   onChange={(e) => updateIngredient(index, 'amount', e.target.value)}
                   className="mt-1"
+                  disabled={disabled}
                 />
               </div>
               
@@ -70,6 +72,7 @@ export function IngredientInput({ ingredients, onChange }: IngredientInputProps)
                   value={ingredient.unit}
                   onChange={(e) => updateIngredient(index, 'unit', e.target.value)}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-2 py-2 text-sm mt-1"
+                  disabled={disabled}
                 >
                   {commonUnits.map(unit => (
                     <option key={unit} value={unit}>{unit}</option>
@@ -84,6 +87,7 @@ export function IngredientInput({ ingredients, onChange }: IngredientInputProps)
                   size="sm"
                   onClick={() => removeIngredient(index)}
                   className="h-10 w-full"
+                  disabled={disabled}
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -99,6 +103,7 @@ export function IngredientInput({ ingredients, onChange }: IngredientInputProps)
                 onChange={(e) => updateIngredient(index, 'name', e.target.value)}
                 required
                 className="mt-1"
+                disabled={disabled}
               />
             </div>
 
@@ -111,6 +116,7 @@ export function IngredientInput({ ingredients, onChange }: IngredientInputProps)
                   placeholder="2"
                   value={ingredient.amount}
                   onChange={(e) => updateIngredient(index, 'amount', e.target.value)}
+                  disabled={disabled}
                 />
               </div>
               
@@ -121,6 +127,7 @@ export function IngredientInput({ ingredients, onChange }: IngredientInputProps)
                   value={ingredient.unit}
                   onChange={(e) => updateIngredient(index, 'unit', e.target.value)}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  disabled={disabled}
                 >
                   {commonUnits.map(unit => (
                     <option key={unit} value={unit}>{unit}</option>
@@ -136,6 +143,7 @@ export function IngredientInput({ ingredients, onChange }: IngredientInputProps)
                   value={ingredient.name}
                   onChange={(e) => updateIngredient(index, 'name', e.target.value)}
                   required
+                  disabled={disabled}
                 />
               </div>
               
@@ -146,6 +154,7 @@ export function IngredientInput({ ingredients, onChange }: IngredientInputProps)
                   size="sm"
                   onClick={() => removeIngredient(index)}
                   className="h-10 w-10 p-0"
+                  disabled={disabled}
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -157,7 +166,7 @@ export function IngredientInput({ ingredients, onChange }: IngredientInputProps)
       
       {ingredients.length === 0 && (
         <div className="text-center py-4 text-gray-500">
-          <Button type="button" variant="outline" onClick={addIngredient}>
+          <Button type="button" variant="outline" onClick={addIngredient} disabled={disabled}>
             Add your first ingredient
           </Button>
         </div>
