@@ -72,8 +72,8 @@
 @media print {
   /* Global print settings */
   * {
-    -webkit-print-color-adjust: exact !important;
-    color-adjust: exact !important;
+    -webkit-print-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
   
   body {

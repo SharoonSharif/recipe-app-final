@@ -38,6 +38,21 @@ export const getRecipes = query({
   },
 });
 
+// Get a single recipe by ID (for sharing) - NO PRIVACY CHECK
+export const getPublicRecipe = query({
+  args: { id: v.id("recipes") },
+  handler: async (ctx, args) => {
+    const recipe = await ctx.db.get(args.id);
+    
+    // Return recipe if it exists (no privacy check)
+    if (!recipe) {
+      return null;
+    }
+    
+    return recipe;
+  },
+});
+
 // Create a new recipe
 export const createRecipe = mutation({
   args: {

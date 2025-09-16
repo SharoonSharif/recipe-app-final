@@ -24,6 +24,7 @@ interface Recipe {
   servings?: number
   rating?: number
   isFavorite?: boolean
+  isPublic?: boolean // ADD THIS LINE
   userId: string
   createdAt: number
 }
@@ -36,6 +37,7 @@ interface RecipeDetailProps {
 
 export function RecipeDetail({ recipe, onBack, onEdit }: RecipeDetailProps) {
   const deleteRecipe = useMutation(api.recipes.deleteRecipe)
+  const toggleSharing = useMutation(api.recipes.toggleRecipeSharing)
   const [scaleFactor, setScaleFactor] = useState<number>(1)
 
   const handleDelete = async () => {
@@ -51,6 +53,14 @@ export function RecipeDetail({ recipe, onBack, onEdit }: RecipeDetailProps) {
 
   const handlePrint = () => {
     window.print()
+  }
+
+  const handleToggleSharing = async (isPublic: boolean) => {
+    try {
+      await toggleSharing({ id: recipe._id as any, isPublic })
+    } catch (error) {
+      console.error('Error toggling sharing:', error)
+    }
   }
 
   // Scale ingredient amounts
@@ -100,8 +110,12 @@ export function RecipeDetail({ recipe, onBack, onEdit }: RecipeDetailProps) {
           ← Back to Recipes
         </Button>
         <div className="flex gap-2 flex-wrap">
-          {/* Share Button */}
-          <ShareButton recipeId={recipe._id} />
+          {/* NEW: Share Button */}
+          <ShareButton
+            recipeId={recipe._id}
+            isPublic={recipe.isPublic || false}
+            onToggleSharing={handleToggleSharing}
+          />
           
           <Button variant="outline" onClick={handlePrint}>
             <Printer className="h-4 w-4 mr-2" />

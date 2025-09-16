@@ -24,9 +24,6 @@ interface Recipe {
   prepTime: number
   category: string
   servings?: number
-  rating?: number
-  isFavorite?: boolean
-  isPublic?: boolean // ADD THIS LINE
   userId: string
   createdAt: number
 }
@@ -35,7 +32,6 @@ interface AddRecipeFormProps {
   onSuccess: () => void
   onCancel: () => void
   editingRecipe?: Recipe | null
-  // Optional props for enhanced loading/error handling
   isSubmitting?: boolean
   onSubmit?: () => void
   onError?: (error: string) => void
