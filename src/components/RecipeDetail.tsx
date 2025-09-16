@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Printer } from 'lucide-react'
 
 interface Ingredient {
   name: string
@@ -43,6 +44,11 @@ export function RecipeDetail({ recipe, onBack, onEdit }: RecipeDetailProps) {
         console.error('Error deleting recipe:', error)
       }
     }
+  }
+
+  // Print function
+  const handlePrint = () => {
+    window.print()
   }
 
   // Scale ingredient amounts
@@ -92,11 +98,16 @@ export function RecipeDetail({ recipe, onBack, onEdit }: RecipeDetailProps) {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
+      {/* Non-print header with buttons */}
+      <div className="flex justify-between items-center mb-6 print:hidden">
         <Button variant="outline" onClick={onBack}>
           ← Back to Recipes
         </Button>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={handlePrint}>
+            <Printer className="h-4 w-4 mr-2" />
+            Print Recipe
+          </Button>
           <Button variant="outline" onClick={onEdit}>
             Edit Recipe
           </Button>
@@ -106,19 +117,36 @@ export function RecipeDetail({ recipe, onBack, onEdit }: RecipeDetailProps) {
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-3xl">{recipe.name}</CardTitle>
-          <div className="flex gap-4 text-sm text-gray-600 flex-wrap">
-            <span>Category: {recipe.category}</span>
-            <span>Prep Time: {recipe.prepTime} minutes</span>
-            {recipe.servings && <span>Serves: {recipe.servings}</span>}
-            <span>Added: {new Date(recipe.createdAt).toLocaleDateString()}</span>
+      <Card className="print:shadow-none print:border-none">
+        <CardHeader className="print:pb-4">
+          <CardTitle className="text-3xl print:text-4xl print:mb-2">{recipe.name}</CardTitle>
+          
+          {/* Recipe metadata - optimized for print */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg print:bg-white print:p-0 print:grid-cols-4 print:gap-6 print:border-b print:border-gray-300 print:pb-4">
+            <div>
+              <span className="font-medium text-sm print:text-base">Prep Time:</span>
+              <p className="text-gray-600 print:text-black">{recipe.prepTime} minutes</p>
+            </div>
+            <div>
+              <span className="font-medium text-sm print:text-base">Category:</span>
+              <p className="text-gray-600 print:text-black">{recipe.category}</p>
+            </div>
+            {scaledServings && (
+              <div>
+                <span className="font-medium text-sm print:text-base">Servings:</span>
+                <p className="text-gray-600 print:text-black">{scaledServings}</p>
+              </div>
+            )}
+            <div className="print:hidden">
+              <span className="font-medium text-sm">Added:</span>
+              <p className="text-gray-600">{new Date(recipe.createdAt).toLocaleDateString()}</p>
+            </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Recipe Scaling Controls */}
-          <div className="bg-blue-50 p-4 rounded-lg">
+
+        <CardContent className="space-y-6 print:space-y-8">
+          {/* Recipe Scaling Controls - Hidden in print */}
+          <div className="bg-blue-50 p-4 rounded-lg print:hidden">
             <div className="flex items-center gap-4 flex-wrap">
               <Label htmlFor="scale" className="font-semibold">Scale Recipe:</Label>
               <div className="flex items-center gap-2">
@@ -180,31 +208,43 @@ export function RecipeDetail({ recipe, onBack, onEdit }: RecipeDetailProps) {
             )}
           </div>
 
-          <div>
-            <h3 className="text-xl font-semibold mb-3">Ingredients</h3>
-            <ul className="space-y-2">
+          {/* Ingredients Section - Print optimized */}
+          <div className="print:break-inside-avoid">
+            <h3 className="text-xl font-semibold mb-4 print:text-2xl print:mb-6 print:border-b print:border-gray-300 print:pb-2">Ingredients</h3>
+            <div className="grid gap-3 print:gap-2">
               {scaledIngredients.map((ingredient, index) => (
-                <li key={index} className="flex items-start">
-                  <span className="text-gray-400 mr-2">•</span>
-                  <span>
-                    <strong className={scaleFactor !== 1 ? "text-blue-600" : ""}>
+                <div key={index} className="flex items-start print:py-1">
+                  <span className="text-gray-400 mr-3 print:text-black print:mr-4">•</span>
+                  <span className="print:text-base">
+                    <strong className={`${scaleFactor !== 1 ? "text-blue-600 print:text-black" : "print:text-black"}`}>
                       {ingredient.amount} {ingredient.unit}
-                    </strong> {ingredient.name}
+                    </strong>{" "}
+                    {ingredient.name}
                     {scaleFactor !== 1 && (
-                      <span className="text-xs text-gray-500 ml-2">
+                      <span className="text-xs text-gray-500 ml-2 print:hidden">
                         (was {recipe.ingredients[index].amount} {recipe.ingredients[index].unit})
                       </span>
                     )}
                   </span>
-                </li>
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
 
-          <div>
-            <h3 className="text-xl font-semibold mb-3">Instructions</h3>
-            <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
-              {recipe.instructions}
+          {/* Instructions Section - Print optimized */}
+          <div className="print:break-inside-avoid">
+            <h3 className="text-xl font-semibold mb-4 print:text-2xl print:mb-6 print:border-b print:border-gray-300 print:pb-2">Instructions</h3>
+            <div className="space-y-4 print:space-y-3">
+              {recipe.instructions.split('\n').filter(step => step.trim()).map((step, index) => (
+                <div key={index} className="flex items-start print:py-1">
+                  <span className="bg-blue-100 text-blue-800 text-sm font-medium px-2 py-1 rounded-full mr-3 min-w-[24px] text-center print:bg-gray-200 print:text-black print:text-base">
+                    {index + 1}
+                  </span>
+                  <p className="text-gray-700 leading-relaxed print:text-black print:text-base print:leading-6">
+                    {step.trim()}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
         </CardContent>

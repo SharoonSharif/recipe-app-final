@@ -67,3 +67,138 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Print Styles for Recipe Printing */
+@media print {
+  /* Global print settings */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+  
+  body {
+    font-size: 12pt;
+    line-height: 1.4;
+    color: black;
+  }
+  
+  /* Hide elements that shouldn't print */
+  .print\:hidden {
+    display: none !important;
+  }
+  
+  /* Remove shadows and borders for cleaner print */
+  .print\:shadow-none {
+    box-shadow: none !important;
+  }
+  
+  .print\:border-none {
+    border: none !important;
+  }
+  
+  /* Typography for print */
+  .print\:text-4xl {
+    font-size: 24pt !important;
+    font-weight: bold;
+  }
+  
+  .print\:text-2xl {
+    font-size: 18pt !important;
+    font-weight: bold;
+  }
+  
+  .print\:text-base {
+    font-size: 12pt !important;
+  }
+  
+  /* Spacing for print */
+  .print\:mb-2 {
+    margin-bottom: 8pt !important;
+  }
+  
+  .print\:mb-6 {
+    margin-bottom: 16pt !important;
+  }
+  
+  .print\:pb-2 {
+    padding-bottom: 8pt !important;
+  }
+  
+  .print\:pb-4 {
+    padding-bottom: 12pt !important;
+  }
+  
+  .print\:p-0 {
+    padding: 0 !important;
+  }
+  
+  .print\:py-1 {
+    padding-top: 4pt !important;
+    padding-bottom: 4pt !important;
+  }
+  
+  /* Grid and layout for print */
+  .print\:grid-cols-4 {
+    grid-template-columns: repeat(4, 1fr) !important;
+  }
+  
+  .print\:gap-6 {
+    gap: 16pt !important;
+  }
+  
+  .print\:gap-2 {
+    gap: 8pt !important;
+  }
+  
+  .print\:space-y-8 > * + * {
+    margin-top: 20pt !important;
+  }
+  
+  .print\:space-y-3 > * + * {
+    margin-top: 10pt !important;
+  }
+  
+  /* Colors for print */
+  .print\:bg-white {
+    background-color: white !important;
+  }
+  
+  .print\:bg-gray-200 {
+    background-color: #e5e7eb !important;
+  }
+  
+  .print\:text-black {
+    color: black !important;
+  }
+  
+  /* Borders for print */
+  .print\:border-b {
+    border-bottom: 1pt solid !important;
+  }
+  
+  .print\:border-gray-300 {
+    border-color: #d1d5db !important;
+  }
+  
+  /* Prevent page breaks */
+  .print\:break-inside-avoid {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+  
+  .print\:leading-6 {
+    line-height: 1.5 !important;
+  }
+  
+  /* Page setup */
+  @page {
+    margin: 0.5in;
+    size: letter;
+  }
+  
+  /* Ensure ingredients and instructions don't break across pages */
+  h3 {
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+}
