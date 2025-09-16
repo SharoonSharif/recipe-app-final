@@ -1,15 +1,40 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
-// Get all recipes for a user
+// Get all recipes for a user with optional filtering
 export const getRecipes = query({
-  args: { userId: v.string() },
+  args: { 
+    userId: v.string(),
+    favoritesOnly: v.optional(v.boolean()),
+    sortBy: v.optional(v.string()) // "rating", "name", "newest"
+  },
   handler: async (ctx, args) => {
-    return await ctx.db
+    let query = ctx.db
       .query("recipes")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
-      .order("desc")
-      .collect();
+      .withIndex("by_user", (q) => q.eq("userId", args.userId));
+
+    // Filter by favorites if requested
+    if (args.favoritesOnly) {
+      query = ctx.db
+        .query("recipes")
+        .withIndex("by_favorite", (q) => 
+          q.eq("userId", args.userId).eq("isFavorite", true)
+        );
+    }
+
+    let recipes = await query.collect();
+
+    // Sort recipes based on sortBy parameter
+    if (args.sortBy === "rating") {
+      recipes.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    } else if (args.sortBy === "name") {
+      recipes.sort((a, b) => a.name.localeCompare(b.name));
+    } else {
+      // Default: sort by newest first
+      recipes.sort((a, b) => b.createdAt - a.createdAt);
+    }
+
+    return recipes;
   },
 });
 
@@ -32,6 +57,8 @@ export const createRecipe = mutation({
     return await ctx.db.insert("recipes", {
       ...args,
       createdAt: Date.now(),
+      rating: undefined,
+      isFavorite: false,
     });
   },
 });
@@ -54,6 +81,28 @@ export const updateRecipe = mutation({
   handler: async (ctx, args) => {
     const { id, ...updateData } = args;
     return await ctx.db.patch(id, updateData);
+  },
+});
+
+// Update recipe rating
+export const updateRecipeRating = mutation({
+  args: {
+    id: v.id("recipes"),
+    rating: v.optional(v.number()) // 1-5 or undefined to remove rating
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.patch(args.id, { rating: args.rating });
+  },
+});
+
+// Toggle recipe favorite status
+export const toggleRecipeFavorite = mutation({
+  args: {
+    id: v.id("recipes"),
+    isFavorite: v.boolean()
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.patch(args.id, { isFavorite: args.isFavorite });
   },
 });
 

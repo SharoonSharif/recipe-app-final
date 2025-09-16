@@ -1,7 +1,5 @@
-// Enhanced recipes.tsx with better loading and error handling
-
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useQuery } from 'convex/react'
+import { useQuery, useMutation } from 'convex/react'
 import { useSession, useUser } from '@descope/react-sdk'
 import { useEffect, useState, useMemo } from 'react'
 import { api } from '../../convex/_generated/api'
@@ -10,7 +8,9 @@ import { Button } from '@/components/ui/button'
 import { AddRecipeForm } from '@/components/AddRecipeForm'
 import { RecipeDetail } from '@/components/RecipeDetail'
 import { RecipeFilters } from '@/components/RecipeFilters'
-import { Loader2, AlertCircle, RefreshCw } from 'lucide-react'
+import { StarRating } from '@/components/StarRating'
+import { FavoriteButton } from '@/components/FavoriteButton'
+import { Loader2, AlertCircle, RefreshCw, Heart } from 'lucide-react'
 
 // Loading skeleton component
 function RecipeCardSkeleton() {
@@ -57,9 +57,17 @@ function RecipesList() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('')
   const [ingredientFilter, setIngredientFilter] = useState('')
+  
+  // New filter/sort states
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
+  const [sortBy, setSortBy] = useState<string>('newest')
 
   // Form submission states
   const [submitError, setSubmitError] = useState<string | null>(null)
+
+  // Mutations for ratings and favorites
+  const updateRating = useMutation(api.recipes.updateRecipeRating)
+  const toggleFavorite = useMutation(api.recipes.toggleRecipeFavorite)
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -68,12 +76,16 @@ function RecipesList() {
     }
   }, [isAuthenticated, isSessionLoading, navigate])
 
-  // Get recipes for the current user
+  // Get recipes with new filtering options
   const recipes = useQuery(api.recipes.getRecipes, 
-    user ? { userId: user.userId } : "skip"
+    user ? { 
+      userId: user.userId,
+      favoritesOnly: showFavoritesOnly,
+      sortBy: sortBy
+    } : "skip"
   )
 
-  // Filter recipes based on search criteria
+  // Filter recipes based on search criteria (client-side filtering)
   const filteredRecipes = useMemo(() => {
     if (!recipes) return []
     
@@ -97,9 +109,29 @@ function RecipesList() {
     setSearchTerm('')
     setSelectedCategory('')
     setIngredientFilter('')
+    setShowFavoritesOnly(false)
+    setSortBy('newest')
   }
 
-  // Handle form success with loading state
+  // Handle rating changes
+  const handleRatingChange = async (recipeId: string, rating: number | undefined) => {
+    try {
+      await updateRating({ id: recipeId as any, rating })
+    } catch (error) {
+      console.error('Error updating rating:', error)
+    }
+  }
+
+  // Handle favorite toggle
+  const handleFavoriteToggle = async (recipeId: string, currentFavorite: boolean) => {
+    try {
+      await toggleFavorite({ id: recipeId as any, isFavorite: !currentFavorite })
+    } catch (error) {
+      console.error('Error toggling favorite:', error)
+    }
+  }
+
+  // Handle form success
   const handleFormSuccess = () => {
     setSubmitError(null)
     setShowAddForm(false)
@@ -108,7 +140,7 @@ function RecipesList() {
 
   // Retry function for error state
   const retryLoadingRecipes = () => {
-    window.location.reload() // Simple retry - Convex will re-fetch
+    window.location.reload()
   }
 
   // Loading states
@@ -192,7 +224,7 @@ function RecipesList() {
     )
   }
 
-  // Handle error state (if Convex query fails)
+  // Handle error state
   if (recipes === null) {
     return (
       <ErrorDisplay 
@@ -201,6 +233,8 @@ function RecipesList() {
       />
     )
   }
+
+  const favoriteCount = recipes?.filter(r => r.isFavorite).length || 0
 
   return (
     <div>
@@ -212,17 +246,46 @@ function RecipesList() {
       </div>
 
       {recipes.length > 0 && (
-        <RecipeFilters
-          onSearchChange={setSearchTerm}
-          onCategoryChange={setSelectedCategory}
-          onIngredientChange={setIngredientFilter}
-          onClearFilters={clearFilters}
-          searchTerm={searchTerm}
-          selectedCategory={selectedCategory}
-          ingredientFilter={ingredientFilter}
-          totalRecipes={recipes.length}
-          filteredCount={filteredRecipes.length}
-        />
+        <>
+          <RecipeFilters
+            onSearchChange={setSearchTerm}
+            onCategoryChange={setSelectedCategory}
+            onIngredientChange={setIngredientFilter}
+            onClearFilters={clearFilters}
+            searchTerm={searchTerm}
+            selectedCategory={selectedCategory}
+            ingredientFilter={ingredientFilter}
+            totalRecipes={recipes.length}
+            filteredCount={filteredRecipes.length}
+          />
+          
+          {/* NEW: Favorites and Sorting Controls */}
+          <div className="flex flex-wrap gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+            <div className="flex items-center gap-2">
+              <Button
+                variant={showFavoritesOnly ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+              >
+                <Heart className="h-4 w-4 mr-2" />
+                Favorites Only ({favoriteCount})
+              </Button>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium">Sort by:</label>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="text-sm border border-gray-300 rounded px-2 py-1"
+              >
+                <option value="newest">Newest First</option>
+                <option value="name">Name (A-Z)</option>
+                <option value="rating">Highest Rated</option>
+              </select>
+            </div>
+          </div>
+        </>
       )}
 
       {recipes.length === 0 ? (
@@ -244,12 +307,36 @@ function RecipesList() {
           {filteredRecipes.map((recipe) => (
             <Card 
               key={recipe._id} 
-              className="cursor-pointer hover:shadow-lg transition-shadow"
+              className="cursor-pointer hover:shadow-lg transition-shadow relative"
               onClick={() => setSelectedRecipe(recipe)}
             >
-              <CardHeader>
+              {/* Favorite button - positioned absolutely */}
+              <div className="absolute top-3 right-3 z-10">
+                <FavoriteButton
+                  isFavorite={recipe.isFavorite || false}
+                  onToggle={(e) => {
+                    e?.stopPropagation?.() // Prevent card click
+                    handleFavoriteToggle(recipe._id, recipe.isFavorite || false)
+                  }}
+                />
+              </div>
+
+              <CardHeader className="pr-12">
                 <CardTitle className="text-lg">{recipe.name}</CardTitle>
+                
+                {/* Rating display */}
+                <div 
+                  className="flex items-center gap-2"
+                  onClick={(e) => e.stopPropagation()} // Prevent card click when interacting with rating
+                >
+                  <StarRating
+                    rating={recipe.rating}
+                    onRatingChange={(rating) => handleRatingChange(recipe._id, rating)}
+                    size="sm"
+                  />
+                </div>
               </CardHeader>
+              
               <CardContent>
                 <p className="text-sm text-gray-600 mb-2">
                   Category: {recipe.category}
